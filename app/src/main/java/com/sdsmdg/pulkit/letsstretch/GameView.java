@@ -20,8 +20,10 @@ public class GameView extends View {
     AppCompatActivity activity;
     float height, width;
     float ballPositionX, ballPositionY, ballRadius;
-    float acceleration,vx,vy;
+    float acceleration, vx, vy;
     Timer timer;
+    boolean released;
+
     public GameView(Context context, final AppCompatActivity activity) {
         super(context);
         this.activity = activity;
@@ -30,9 +32,11 @@ public class GameView extends View {
         ballPositionY = 2 * height / 3;
         ballPositionX = width / 4;
         ballRadius = 30;
-        timer=new Timer();
-        vx=0;vy=0;
-        acceleration=10;
+        timer = new Timer();
+        vx = 0;
+        vy = 0;
+        acceleration = 1;
+        released = false;
     }
 
     protected void onDraw(Canvas canvas) {
@@ -44,13 +48,16 @@ public class GameView extends View {
         Paint pink = new Paint();
         pink.setColor(Color.parseColor("#F34212"));
         pink.setStyle(Paint.Style.FILL);
-        if (stretchLimit(ballPositionX, ballPositionY)) {
+        if (released == false) {
             canvas.drawLine(0, 2 * height / 3, ballPositionX, ballPositionY, yellow);
             canvas.drawLine(ballPositionX, ballPositionY, width / 2, 2 * height / 3, yellow);
             canvas.drawCircle(ballPositionX, ballPositionY - ballRadius, ballRadius, pink);
         } else {
+            ballPositionX+=vx;
+            ballPositionY+=vy;
+            vy-=acceleration;
             canvas.drawLine(0, 2 * height / 3, width/2, 2 * height / 3, yellow);
-            canvas.drawCircle(ballPositionX, 2 * height / 3 - ballRadius, ballRadius, pink);
+            canvas.drawCircle(ballPositionX, ballPositionY - ballRadius, ballRadius, pink);
         }
     }
 
@@ -67,25 +74,25 @@ public class GameView extends View {
                 }
                 break;
             case MotionEvent.ACTION_UP:
+                released=true;
                 ballPositionX = event.getX();
                 ballPositionY = event.getY();
                 timer.schedule(
-                        new TimerTask(){
+                        new TimerTask() {
                             @Override
                             public void run() {
                                 activity.runOnUiThread(new Runnable() {
-                                    public void run()
-                                    {
-                                        vy=ballPositionY;
-                                        if(ballPositionX<=width/4)
-                                            vx=width/4-ballPositionX;
+                                    public void run() {
+                                        vy = 2 * height / 3-ballPositionY;
+                                        if (ballPositionX <= width / 4)
+                                            vx = width / 4 - ballPositionX;
                                         else
-                                            vx=ballPositionX-width/4;
+                                            vx = ballPositionX - width / 4;
                                         invalidate();
                                     }
                                 });
                             }
-                        },0,1);
+                        }, 0, 1);
                 break;
         }
         return true;
