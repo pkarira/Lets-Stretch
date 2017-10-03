@@ -27,6 +27,7 @@ public class GameView extends View {
     float acceleration, vx, vy;
     Timer timer;
     boolean won = false;
+    int deviation=10;
     boolean released;
     float[] starPositionsX;
     float[] starPositionsY;
@@ -73,13 +74,14 @@ public class GameView extends View {
         Paint yellow = new Paint();
         yellow.setColor(Color.YELLOW);
         yellow.setStyle(Paint.Style.STROKE);
-        yellow.setStrokeWidth(5);
+        yellow.setStrokeWidth(10);
         Paint pink = new Paint();
         pink.setColor(Color.parseColor("#F34212"));
         pink.setStyle(Paint.Style.FILL);
-        basketballNet.setBounds((int) (obstacleX - obstacleLen / 2), (int) (obstacleY), (int) (obstacleX + obstacleLen / 2), (int) (obstacleY+obstacleLen));
-        basketballNet.draw(canvas);
         canvas.drawLine(obstacleX - obstacleLen / 2, obstacleY, obstacleX + obstacleLen / 2, obstacleY, yellow);
+        canvas.drawLine(5, 2 * height / 3-30, 5, 2 * height / 3+30, yellow);
+        canvas.drawLine(width / 2, 2 * height / 3-30, width / 2, 2 * height / 3+30, yellow);
+        yellow.setStrokeWidth(5);
         if (released == false) {
             canvas.drawLine(0, 2 * height / 3, ballPositionX, ballPositionY, yellow);
             canvas.drawLine(ballPositionX, ballPositionY, width / 2, 2 * height / 3, yellow);
@@ -92,14 +94,28 @@ public class GameView extends View {
                 acceleration *= -1;
             canvas.drawLine(0, 2 * height / 3, width / 2, 2 * height / 3, yellow);
             canvas.drawCircle(ballPositionX, ballPositionY, ballRadius, pink);
-            if (obstacleY - ballPositionY <= 10 && ballPositionX >= obstacleX - obstacleLen / 2 && ballPositionX <= obstacleX + obstacleLen / 2 && won == false)
+            if (obstacleY - ballPositionY <= 10 && obstacleY - ballPositionY >= 0 && ballPositionX >= obstacleX - obstacleLen / 2-5 && ballPositionX <= obstacleX + obstacleLen / 2+5 && won == false) {
                 won = true;
-            if (won == true) {
+                ballPositionX = obstacleX;
+                vx = 0;
+            }
+            if (won == true && ballPositionY > (int) (obstacleY + obstacleLen)) {
                 for (i = 0; i < 6; i++) {
-                    star.setBounds((int) (- 50 + starPositionsX[i]), (int) (starPositionsY[i] - 50), (int) ( 50 + starPositionsX[i]), (int) (starPositionsY[i] + 50));
+                    star.setBounds((int) (-50 + starPositionsX[i]), (int) (starPositionsY[i] - 50), (int) (50 + starPositionsX[i]), (int) (starPositionsY[i] + 50));
                     star.draw(canvas);
                 }
             }
+        }
+        if (won == true && ballPositionY<=(int) (obstacleY + obstacleLen)) {
+            basketballNet.setBounds((int) (obstacleX - obstacleLen / 2)+deviation/2, (int) (obstacleY), (int) (obstacleX + obstacleLen / 2)-deviation/2, (int) (obstacleY + obstacleLen)-deviation);
+            basketballNet.draw(canvas);
+            if (deviation==10)
+                deviation=0;
+            else
+                deviation=10;
+        } else {
+            basketballNet.setBounds((int) (obstacleX - obstacleLen / 2), (int) (obstacleY), (int) (obstacleX + obstacleLen / 2), (int) (obstacleY + obstacleLen));
+            basketballNet.draw(canvas);
         }
     }
 
