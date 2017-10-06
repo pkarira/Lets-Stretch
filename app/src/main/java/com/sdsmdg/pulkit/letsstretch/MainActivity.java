@@ -17,14 +17,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         activity=this;
         relativeLayout=(RelativeLayout)findViewById(R.id.rlayout);
-        gameView=new GameView(this,this);
+        gameView=new GameView(this,this,relativeLayout);
         relativeLayout.addView(gameView);
         startOver=(Button)findViewById(R.id.restart);
         startOver.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 relativeLayout.removeView(gameView);
-                gameView=new GameView(getApplicationContext(),activity);
+                gameView=new GameView(getApplicationContext(),activity,relativeLayout);
                 relativeLayout.addView(gameView);
             }
         });

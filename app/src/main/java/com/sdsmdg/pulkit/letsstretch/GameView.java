@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.RelativeLayout;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -27,16 +28,21 @@ public class GameView extends View {
     float acceleration, vx, vy;
     Timer timer;
     boolean won = false;
-    int deviation=10;
     boolean released;
     float[] starPositionsX;
     float[] starPositionsY;
     Drawable star;
     Drawable basketballNet;
+    Drawable gameOverTitle;
+    Context context;
+    RelativeLayout relativeLayout;
+    int starDeflection,starDeflectionLimit,starDeflectionInterval;
+    int netDeflection,netDeflectionLimit,netDeflectionInterval;
     int i;
 
-    public GameView(Context context, final AppCompatActivity activity) {
+    public GameView(Context context, final AppCompatActivity activity,RelativeLayout relativeLayout) {
         super(context);
+        this.context=context;
         this.activity = activity;
         height = activity.getWindowManager().getDefaultDisplay().getHeight();
         width = activity.getWindowManager().getDefaultDisplay().getWidth();
@@ -54,8 +60,15 @@ public class GameView extends View {
         starPositionsY[3] = height / 2;
         starPositionsY[4] = 3 * height / 4;
         starPositionsY[5] = 3 * height / 4;
+        starDeflection=0;
+        starDeflectionLimit=30;
+        starDeflectionInterval=1;
+        netDeflection=0;
+        netDeflectionLimit=10;
+        netDeflectionInterval=1;
         star = getResources().getDrawable(R.drawable.star);
         basketballNet = getResources().getDrawable(R.drawable.basketball_net);
+        gameOverTitle=getResources().getDrawable(R.drawable.gameover);
         ballPositionY = 2 * height / 3;
         ballPositionX = width / 4;
         ballRadius = 30;
@@ -67,6 +80,7 @@ public class GameView extends View {
         obstacleY = height / 3;
         obstacleLen = width / 4;
         released = false;
+        this.relativeLayout=relativeLayout;
     }
 
     protected void onDraw(Canvas canvas) {
@@ -92,6 +106,10 @@ public class GameView extends View {
             vy -= acceleration;
             if (vy == 0)
                 acceleration *= -1;
+            if(ballPositionY==0 && vy>0)
+                acceleration*=1000;
+            if(ballPositionY==0 && vy<0)
+                acceleration/=1000;
             canvas.drawLine(0, 2 * height / 3, width / 2, 2 * height / 3, yellow);
             canvas.drawCircle(ballPositionX, ballPositionY, ballRadius, pink);
             if (obstacleY - ballPositionY <= 10 && obstacleY - ballPositionY >= 0 && ballPositionX >= obstacleX - obstacleLen / 2-5 && ballPositionX <= obstacleX + obstacleLen / 2+5 && won == false) {
@@ -99,20 +117,38 @@ public class GameView extends View {
                 ballPositionX = obstacleX;
                 vx = 0;
             }
+            if(ballPositionY>obstacleY && vy<0)
+            {
+                gameOverTitle.setBounds(0, 0, (int)width, (int)height/5);
+                gameOverTitle.draw(canvas);
+            }
             if (won == true && ballPositionY > (int) (obstacleY + obstacleLen)) {
                 for (i = 0; i < 6; i++) {
-                    star.setBounds((int) (-50 + starPositionsX[i]), (int) (starPositionsY[i] - 50), (int) (50 + starPositionsX[i]), (int) (starPositionsY[i] + 50));
+                    star.setBounds((int) (-50 + starPositionsX[i])-starDeflection, (int) (starPositionsY[i] - 50)-starDeflection, (int) (50 + starPositionsX[i])+starDeflection, (int) (starPositionsY[i] + 50)+starDeflection);
                     star.draw(canvas);
+                    if((starDeflectionInterval>0 && starDeflection<starDeflectionLimit) ||(starDeflectionInterval<0 && starDeflection>-1*starDeflectionLimit))
+                        starDeflection+=starDeflectionInterval;
+                    else
+                    if(starDeflection==starDeflectionLimit)
+                        starDeflectionInterval*=-1;
+                    else
+                     if(starDeflection==-1*starDeflectionLimit)
+                         starDeflectionInterval*=-1;
                 }
             }
         }
         if (won == true && ballPositionY<=(int) (obstacleY + obstacleLen)) {
-            basketballNet.setBounds((int) (obstacleX - obstacleLen / 2)+deviation/2, (int) (obstacleY), (int) (obstacleX + obstacleLen / 2)-deviation/2, (int) (obstacleY + obstacleLen)-deviation);
+            basketballNet.setBounds((int) (obstacleX - obstacleLen / 2)+netDeflection, (int) (obstacleY), (int) (obstacleX + obstacleLen / 2)-netDeflection, (int) (obstacleY + obstacleLen)-netDeflection);
             basketballNet.draw(canvas);
-            if (deviation==10)
-                deviation=0;
+            if((netDeflectionInterval>0 && netDeflection<0) || (netDeflectionInterval<0 && netDeflection>-1*netDeflectionLimit))
+                netDeflection+=netDeflectionInterval;
             else
-                deviation=10;
+            if(netDeflection==0)
+                netDeflectionInterval*=-1;
+            else
+            if(netDeflection==-1*netDeflectionLimit)
+                netDeflectionInterval*=-1;
+
         } else {
             basketballNet.setBounds((int) (obstacleX - obstacleLen / 2), (int) (obstacleY), (int) (obstacleX + obstacleLen / 2), (int) (obstacleY + obstacleLen));
             basketballNet.draw(canvas);
@@ -141,7 +177,7 @@ public class GameView extends View {
                     ballPositionX = event.getX();
                     ballPositionY = event.getY();
                     vy = (ballPositionY - 2 * height / 3) / 10;
-                    vx = (width / 4 - ballPositionX) / 25;
+                    vx = (width / 4 - ballPositionX) / 40;
                     timer.schedule(
                             new TimerTask() {
                                 @Override
